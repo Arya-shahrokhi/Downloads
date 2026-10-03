@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f6f1" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/images/brand/kalavaran-logo-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/images/brand/kalavaran-logo-512.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!--
+      SEO block. In production Express replaces everything between the two
+      markers with page-specific tags (title, description, canonical, Open Graph,
+      Twitter, JSON-LD) – see backend/src/seo/html.js. In the browser the <Seo />
+      component keeps these tags in sync during client-side navigation.
+      Keep the marker comments exactly as they are.
+    -->
+    <!-- seo:start -->
+    <title data-seo>کالاوران | عطاری آنلاین، گیاهان دارویی، دمنوش و ادویه</title>
+    <meta name="description" content="عطاری آنلاین کالاوران: خرید گیاهان دارویی، دمنوش گیاهی، عرقیات سنتی، روغن‌های گیاهی پرس سرد و ادویه تازه با معرفی شفاف هر محصول و ارسال سریع." data-seo />
+    <meta property="og:site_name" content="کالاوران" data-seo />
+    <meta property="og:locale" content="fa_IR" data-seo />
+    <meta property="og:type" content="website" data-seo />
+    <meta property="og:title" content="کالاوران | عطاری آنلاین، گیاهان دارویی، دمنوش و ادویه" data-seo />
+    <meta property="og:description" content="خرید گیاهان دارویی، دمنوش، عرقیات، روغن گیاهی و ادویه تازه از عطاری آنلاین کالاوران." data-seo />
+    <meta property="og:image" content="/images/og/kalavaran-og-default.jpg" data-seo />
+    <meta name="twitter:card" content="summary_large_image" data-seo />
+    <!-- seo:end -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!--
+      فونت دیگر رندر را بلاک نمی‌کند.
+
+      قبلاً یک <link rel="stylesheet"> ساده با شش وزن (300 تا 800) بود؛ مرورگر
+      تا دانلود شدن آن CSS هیچ پیکسلی رنگ نمی‌کرد و روی اتصال ضعیف صفحه چند
+      صد میلی‌ثانیه سفید می‌ماند. دو تغییر:
+        ۱. فقط وزن‌هایی که واقعاً استفاده می‌شوند (400/500/600/700/800).
+        ۲. بارگذاری غیربلاک‌کننده با الگوی media=print + onload؛ متن فوراً با
+           فونت سیستمی نمایش داده می‌شود و بعد به وزیرمتن سوییچ می‌کند.
+    -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
+    </noscript>
+
+    <!-- هیروی فعلی CSS-only است؛ تصویر ناموجود را بی‌دلیل preload نمی‌کنیم. -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

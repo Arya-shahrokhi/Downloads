@@ -1,0 +1,6 @@
+{
+  "name": "kalavaran-shared",
+  "private": true,
+  "type": "module",
+  "description": "Framework-free modules shared by the backend and the frontend (SEO builders, static content)."
+}

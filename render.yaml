@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: kalavaran
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: SITE_URL
+        sync: false
+      - key: SEO_ALLOW_INDEXING
+        value: true
+      - key: SEO_REDIRECT_TO_CANONICAL_HOST
+        value: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_PHONE
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SHIPPING_FLAT
+        value: 49000
+      - key: FREE_SHIPPING_THRESHOLD
+        value: 1000000

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node 20 + MongoDB 7 regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://127.0.0.1:27017/attari_ci
+      JWT_ACCESS_SECRET: 8ff3b8ae87de4f519c7e13192e85021d91715244417cbd278bc89542e4b362df
+      JWT_REFRESH_SECRET: 3a25d6a4f2758cab5573813868605801102946d84b1bd3db3bb44790067b7789
+      ADMIN_EMAIL: admin@attari.local
+      ADMIN_PASSWORD: KalavaranAdmin123!
+      ADMIN_PHONE: "09120000000"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python image-test dependencies
+        run: python -m pip install --upgrade pip pillow numpy opencv-python-headless
+
+      - name: Install Node dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify real MongoDB connection and seed 183 products
+        run: npm run seed
+
+      - name: Verify seeded MongoDB data
+        run: node scripts/db-smoke.mjs
+
+      - name: Run product, image, CV, responsive, and structure tests
+        run: npm test
+
+      - name: Build frontend
+        run: npm run build

@@ -1,0 +1,16 @@
+{
+  "name": "kalavaran",
+  "version": "1.1.0",
+  "private": true,
+  "workspaces": ["backend", "frontend"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "postinstall": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build --workspace frontend",
+    "start": "npm run start --workspace backend",
+    "seed": "npm run seed --workspace backend",
+    "db:smoke": "node scripts/db-smoke.mjs",
+    "test": "python3 tests/database_stack_audit.py && python3 tests/product_edit_regression.py && python3 tests/catalog_regression.py && python3 tests/image_quality_audit.py && python3 tests/cv_relevance_check.py && python3 tests/responsive_audit.py && node scripts/verify.mjs"
+  }
+}
