@@ -9,7 +9,6 @@ import Seo, { siteUrl } from '../components/common/Seo.jsx';
 import NotFound from './NotFound.jsx';
 import { buildCategorySeo, buildStaticSeo, fullTitle } from '@shared/seo/index.js';
 import { productApi } from '../services/endpoints.js';
-import { toFa } from '../utils/format.js';
 
 const SORTS = [
   { value: 'newest', label: 'جدیدترین' },
@@ -49,14 +48,6 @@ export default function Products() {
     return () => { alive = false; };
   }, [filters]);
 
-  /**
-   * Applies a new filter set.
-   *
-   * On /category/:slug the category lives in the path, not the query string.
-   * Previously the category key was simply dropped here, so picking another
-   * category (or "همه محصولات") in the sidebar did nothing on category pages.
-   * Now a category change navigates to the right URL and keeps the other filters.
-   */
   const apply = useCallback((next) => {
     const clean = Object.entries(next).reduce((acc, [k, v]) => {
       if (k !== 'category' && v !== '' && v !== null && v !== undefined) acc[k] = String(v);
@@ -66,7 +57,7 @@ export default function Products() {
 
     if (slug) {
       if (nextCategory !== slug) {
-        delete clean.page; // new listing starts from page 1
+        delete clean.page;
         const qs = new URLSearchParams(clean).toString();
         const base = nextCategory ? `/category/${encodeURIComponent(nextCategory)}` : '/products';
         navigate(qs ? `${base}?${qs}` : base);
@@ -89,19 +80,11 @@ export default function Products() {
   const title = activeCategory?.name || (filters.search ? `جست‌وجوی «${filters.search}»` : 'فروشگاه کالاوران');
   const page = Math.max(1, Number.parseInt(filters.page || '1', 10) || 1);
 
-  /**
-   * Same shared builders the server uses for the raw HTML head, so the tags
-   * don't change when React takes over:
-   *  - category pages → buildCategorySeo (CollectionPage + BreadcrumbList, and
-   *    FAQPage on page 1, because the FAQs below are rendered on page 1)
-   *  - /products      → buildStaticSeo
-   * Filter/sort/search URLs get `noindex, follow` + a clean canonical from the shared URL policy.
-   */
   const seo = useMemo(() => {
     const base = siteUrl();
     if (slug && activeCategory) {
       const built = buildCategorySeo(activeCategory, { siteUrl: base, search: rawSearch, products: state.products, perPage: PER_PAGE });
-      if (!state.loading && !state.error && (state.meta?.total ?? 0) === 0) built.robots = 'noindex, follow'; // thin content, as on the server
+      if (!state.loading && !state.error && (state.meta?.total ?? 0) === 0) built.robots = 'noindex, follow';
       return built;
     }
     const built = buildStaticSeo(pathname, { siteUrl: base, search: rawSearch });
@@ -109,11 +92,10 @@ export default function Products() {
     return built;
   }, [slug, activeCategory, rawSearch, pathname, state.products, state.loading, state.error, state.meta, filters.search, title]);
 
-  const content = seo?.content; // category intro + FAQs (DB overrides → editorial defaults)
+  const content = seo?.content;
   const intro = page === 1 ? (content?.intro || []) : [];
   const faqs = page === 1 ? (content?.faqs || []) : [];
 
-  /** Real URL for every page number (Google follows <a href>, not onClick). */
   const pageHref = useCallback((p) => {
     const next = new URLSearchParams(params);
     if (p > 1) next.set('page', String(p)); else next.delete('page');
@@ -121,7 +103,6 @@ export default function Products() {
     return qs ? `${pathname}?${qs}` : pathname;
   }, [params, pathname]);
 
-  // Unknown category slug (after the category list has loaded and nothing came back): the server answers 404 here too.
   if (slug && categories.length > 0 && !activeCategory && !state.loading && (state.meta?.total ?? 0) === 0) {
     return <NotFound />;
   }
@@ -160,11 +141,7 @@ export default function Products() {
         <FilterSidebar filters={filters} categories={categories} onChange={apply} onReset={reset} activeCount={activeCount} />
 
         <div className="min-w-0 flex-1">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <p className="num text-sm text-ink-500">
-              {state.loading ? 'در حال بارگذاری…' : `${toFa(state.meta?.total || 0)} کالا`}
-            </p>
-
+          <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
             <div className="relative">
               <select
                 value={filters.sort || 'newest'}
@@ -215,7 +192,6 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Visible FAQs (page 1 only) – the FAQPage JSON-LD is built from exactly this list. */}
       {faqs.length > 0 && (
         <section className="wrap pb-6" aria-labelledby="category-faq-title">
           <div className="rounded-3xl border hairline bg-bone-50 p-5 sm:p-8">

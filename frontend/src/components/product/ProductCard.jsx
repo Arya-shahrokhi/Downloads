@@ -7,13 +7,6 @@ import { useWishlist } from '../../context/WishlistContext.jsx';
 import SmartImage from '../ui/SmartImage.jsx';
 
 function ProductCard({ product, priority = false }) {
-  /**
-   * فقط actions (مرجع پایدار) مصرف می‌شود، نه داده‌ی سبد.
-   * وضعیت «در حال افزودن» هم محلی است، نه از کانتکست.
-   *
-   * قبلاً این کامپوننت `useCart()` را می‌خواند که شامل خود سبد بود؛ نتیجه:
-   * افزودن یک کالا باعث رندر مجدد هر ۱۲ کارت گرید می‌شد و memo هم بی‌اثر بود.
-   */
   const { has, toggle } = useWishlist();
   const revealRef = useRef(null);
   useEffect(() => {
@@ -35,7 +28,6 @@ function ProductCard({ product, priority = false }) {
     <article ref={revealRef} className="group relative flex flex-col" data-reveal>
       <div className="product-media relative aspect-[4/5] overflow-hidden rounded-2xl bg-bone-100">
         <Link to={`/products/${product.slug}`} className="block size-full" aria-label={product.name}>
-          {/* چهار کارت اول در دید اولیه‌اند: زودتر دانلود و رمزگشایی می‌شوند */}
           <SmartImage
             src={product.images?.[0]?.url}
             alt={product.name}
@@ -82,7 +74,6 @@ function ProductCard({ product, priority = false }) {
 
       <div className="flex flex-1 flex-col gap-1.5 pt-3.5">
         <span className="text-2xs font-medium tracking-wide text-moss-600">
-          {product.productNumber && <span className="num ml-2">کد {toFa(String(product.productNumber).padStart(3, '0'))}</span>}
           {product.category?.name}
         </span>
         <h3 className="text-[0.95rem] font-semibold leading-6 text-ink-900">
@@ -97,10 +88,6 @@ function ProductCard({ product, priority = false }) {
   );
 }
 
-/**
- * مقایسه‌ی سطحی روی همان فیلدهایی که رندر را عوض می‌کنند.
- * پاسخ‌های تازه‌ی API آبجکت‌های جدید می‌سازند، پس مقایسه‌ی مرجع بی‌فایده است.
- */
 export default memo(ProductCard, (prev, next) => (
   prev.product._id === next.product._id
   && prev.product.stock === next.product.stock
