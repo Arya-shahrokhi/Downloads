@@ -5,9 +5,13 @@ import { CLOUDINARY_WIDTHS, cloudinarySrcSet, cloudinaryUrl, isCloudinaryUrl } f
 const PRODUCT_WIDTHS = [300, 500, 800];
 const HERO_WIDTHS = [800, 1200, 1800];
 
+/** عکس‌های پوشه‌ی fixed تک‌فایلی‌اند و نسخه‌ی ‎-300/-500/-800 ندارند. */
+const NO_VARIANT_DIRS = ['/images/products/fixed/'];
+
 /** آیا این مسیر یک تصویر محلی است که نسخه‌های ریسپانسیو دارد؟ */
 const localBase = (src) => {
   if (typeof src !== 'string' || !src.startsWith('/images/') || (!src.endsWith('.jpg') && !src.endsWith('.webp'))) return null;
+  if (NO_VARIANT_DIRS.some((dir) => src.startsWith(dir))) return null;
   return src.replace(/\.(?:jpg|webp)$/, '');
 };
 

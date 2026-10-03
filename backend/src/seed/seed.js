@@ -6,6 +6,7 @@ import { Article } from '../models/index.js';
 import { toSlug } from '../utils/slug.js';
 import { categorySlugFor } from '../seo/shared.js';
 import { categories, products, seedReviews, seedUsers } from './data.js';
+import { withFixedImage } from './fixedImages.js';
 
 const destroy = process.argv.includes('--destroy');
 
@@ -51,7 +52,8 @@ const run = async () => {
   const categoryDocs = await Category.create(categories.map((c) => ({ ...c, slug: categorySlugFor(c.name) || toSlug(c.name) })));
   const catMap = new Map(categoryDocs.map((c) => [c.name, c._id]));
 
-  const productDocs = await Product.create(products.map((p) => ({
+  // عکس‌های جدید پوشه‌ی images/products/fixed جایگزین تصاویر قبلی می‌شوند (fixedImages.js)
+  const productDocs = await Product.create(products.map(withFixedImage).map((p) => ({
     ...p,
     slug: toSlug(p.name),
     category: catMap.get(p.category),
