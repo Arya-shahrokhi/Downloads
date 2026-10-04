@@ -12,7 +12,8 @@
     "images:fixed": "node src/seed/applyFixedImages.js",
     "seo:migrate": "node src/seed/migrateSeo.js",
     "seo:audit": "node src/seed/auditSeo.js",
-    "link:check": "node src/seed/checkLinks.js"
+    "link:check": "node src/seed/checkLinks.js",
+    "test:security": "node --test tests/uploads.security.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
