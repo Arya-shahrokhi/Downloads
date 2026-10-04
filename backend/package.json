@@ -9,10 +9,14 @@
     "start": "node src/server.js",
     "seed": "node src/seed/seed.js",
     "seed:destroy": "node src/seed/seed.js --destroy",
+    "seed:admin-products": "node src/seed/seedAdminProducts.js",
     "images:fixed": "node src/seed/applyFixedImages.js",
     "seo:migrate": "node src/seed/migrateSeo.js",
     "seo:audit": "node src/seed/auditSeo.js",
     "link:check": "node src/seed/checkLinks.js"
+  },
+  "nodemonConfig": {
+    "ignore": ["src/seed/adminProducts.js", "src/seed/adminProducts.json", "src/seed/*.tmp", "uploads/*"]
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
