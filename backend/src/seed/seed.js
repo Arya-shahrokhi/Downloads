@@ -65,7 +65,10 @@ const run = async () => {
   const categoryDocs = await Category.create(categories.map((c) => ({ ...c, slug: categorySlugFor(c.name) || toSlug(c.name) })));
   const catMap = new Map(categoryDocs.map((c) => [c.name, c._id]));
 
+<<<<<<< Updated upstream
   mark('create-products');
+=======
+>>>>>>> Stashed changes
   // عکس‌های جدید پوشه‌ی images/products/fixed جایگزین تصاویر قبلی می‌شوند (fixedImages.js)
   const productDocs = await Product.create(products.map(withFixedImage).map((p) => ({
     ...p,
@@ -152,6 +155,7 @@ run()
     process.exitCode = 1;
   })
   .finally(async () => {
+<<<<<<< Updated upstream
     try {
       await disconnectDB();
     } catch (disconnectError) {
@@ -159,3 +163,7 @@ run()
       process.exitCode = 1;
     }
   });
+=======
+    await disconnectDB();
+  });
+>>>>>>> Stashed changes
