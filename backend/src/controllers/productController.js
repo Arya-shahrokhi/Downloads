@@ -9,6 +9,9 @@ import { seoOptions, shareImageFor } from '../seo/context.js';
 import { invalidateSitemap } from '../seo/sitemap.js';
 import { pick } from '../utils/pick.js';
 import { uploadBuffer } from '../config/cloudinary.js';
+import {
+  removeProductSnippet, renderEntry, safely, syncProductSnippet, toSeedEntry,
+} from '../services/productSnippet.js';
 
 const EDITABLE = ['productNumber', 'name', 'description', 'shortDescription', 'category', 'price', 'discount', 'stock', 'unit',
   'weight', 'ingredients', 'usage', 'benefits', 'origin', 'images', 'isFeatured', 'isPopular', 'isActive',
@@ -125,6 +128,8 @@ export const createProduct = asyncHandler(async (req, res) => {
   const product = await Product.create(data);
   await SeoRedirect.clearPath(`/products/${product.slug}`); // URL is live again
   invalidateSitemap();
+  // قطعه کد seed (نام، مشخصات و مسیر عکس) خودکار در seed/adminProducts.js ساخته می‌شود
+  await safely(syncProductSnippet(product));
   return created(res, { product }, 'محصول ایجاد شد');
 });
 
@@ -147,6 +152,8 @@ export const updateProduct = asyncHandler(async (req, res) => {
     await SeoRedirect.recordMove(`/products/${oldSlug}`, `/products/${product.slug}`, 'product');
   }
   invalidateSitemap();
+  // فقط محصولاتی که از پنل ساخته شده‌اند؛ کاتالوگ اصلی data.js دست نمی‌خورد
+  await safely(syncProductSnippet(product, { previousSlug: oldSlug, createIfMissing: false }));
   return ok(res, { product }, 'محصول به‌روزرسانی شد');
 });
 
@@ -157,7 +164,16 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   // 410 Gone: Google drops the URL quickly instead of retrying a 404 for weeks.
   await SeoRedirect.recordGone(`/products/${product.slug}`, 'product');
   invalidateSitemap();
+  await safely(removeProductSnippet(product.slug));
   return ok(res, {}, 'محصول حذف شد');
+});
+
+/** پیش‌نمایش قطعه کد seed یک محصول برای کپی در پنل ادمین (چیزی روی دیسک نمی‌نویسد). */
+export const getProductSnippet = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) throw ApiError.notFound('محصول پیدا نشد');
+  const entry = await toSeedEntry(product, { copyImages: false });
+  return ok(res, { entry, code: `${renderEntry(entry)},` }, 'قطعه کد محصول');
 });
 
 export const uploadProductImages = asyncHandler(async (req, res) => {

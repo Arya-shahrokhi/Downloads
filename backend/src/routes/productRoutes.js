@@ -19,6 +19,9 @@ router.post('/upload', protect, adminOnly, writeLimiter, uploadImages, c.uploadP
 router.get('/:id/reviews', shortCache, validate(idParam), c.listReviews);
 router.post('/:id/reviews', protect, writeLimiter, validate({ ...idParam, ...reviewSchema }), c.addReview);
 
+// پیش‌نمایش قطعه کد seed محصول (نام، مشخصات، مسیر عکس) برای ادمین
+router.get('/:id/snippet', protect, adminOnly, validate(idParam), c.getProductSnippet);
+
 router.put('/:id', protect, adminOnly, validate({ ...idParam, ...updateProductSchema }), c.updateProduct);
 router.delete('/:id', protect, adminOnly, validate(idParam), c.deleteProduct);
 

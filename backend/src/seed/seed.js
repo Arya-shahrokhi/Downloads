@@ -7,6 +7,7 @@ import { toSlug } from '../utils/slug.js';
 import { categorySlugFor } from '../seo/shared.js';
 import { categories, products, seedReviews, seedUsers } from './data.js';
 import { withFixedImage } from './fixedImages.js';
+import { adminProducts } from './adminProducts.js';
 
 const destroy = process.argv.includes('--destroy');
 let phase = 'startup';
@@ -23,6 +24,36 @@ const wipe = async () => {
     Order.deleteMany({}), Review.deleteMany({}), Cart.deleteMany({}), Wishlist.deleteMany({}),
   ]);
   console.log('[seed] داده‌های قبلی پاک شد');
+};
+
+/**
+ * محصولاتی که ادمین از پنل اضافه کرده (adminProducts.js، خودکار ساخته می‌شود) بعد از wipe
+ * دوباره ثبت می‌شوند تا seed آن‌ها را از بین نبرد. upsert بر اساس slug: اگر هم‌نام کاتالوگ باشد،
+ * نسخه‌ی پنل (آخرین ویرایش ادمین) برنده است.
+ */
+const restoreAdminProducts = async (catMap) => {
+  mark('restore-admin-products');
+  let done = 0;
+  const failed = [];
+  for (const item of adminProducts) {
+    const category = catMap.get(item.category);
+    if (!category) {
+      failed.push(`${item.name} (دسته «${item.category}» در data.js نیست)`);
+      continue;
+    }
+    try {
+      await Product.findOneAndUpdate(
+        { slug: item.slug },
+        { ...item, category, oldPrice: item.discount > 0 ? item.price : null },
+        { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true },
+      );
+      done++;
+    } catch (err) {
+      failed.push(`${item.name} (${err.message})`);
+    }
+  }
+  console.log(`[seed] ${done} محصول پنل ادمین برگردانده شد`);
+  if (failed.length) console.warn(`[seed] محصولات پنل ناموفق (${failed.length}): ${failed.join('، ')}`);
 };
 
 const run = async () => {
@@ -75,6 +106,8 @@ const run = async () => {
     soldCount: Math.floor(Math.random() * 220),
   })));
   console.log(`[seed] ${productDocs.length} محصول در ${categoryDocs.length} دسته‌بندی ثبت شد`);
+
+  await restoreAdminProducts(catMap);
 
   mark('create-reviews');
   // نظرات
