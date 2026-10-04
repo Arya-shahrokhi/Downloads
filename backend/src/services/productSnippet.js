@@ -3,27 +3,25 @@
  *
  * هر بار که ادمین محصولی می‌سازد (یا محصولی را که قبلاً از پنل ساخته ویرایش/حذف می‌کند):
  *   ۱. نام، مشخصات و مسیر عکس محصول به فرمت seed (مثل premiumRiceProducts.js) درمی‌آید؛
- *   ۲. در backend/src/seed/adminProducts.json ذخیره و فایل adminProducts.js از رویش بازسازی می‌شود؛
- *   ۳. عکس آپلودشده‌ی محلی (/uploads/products/...) به frontend/public/images/products/admin/
- *      با نام تمیز <slug>.<ext> کپی می‌شود تا مسیرش داخل ریپو ثابت بماند (uploads در git نیست).
+ *   ۲. در adminProducts.json ذخیره و فایل adminProducts.js از رویش بازسازی می‌شود
+ *      (موقعیت: persistent disk در production، ریپو در لوکال)؛
+ *   ۳. عکس آپلودشده‌ی محلی (/uploads/products/...) با نام تمیز <slug>.<ext> کپی می‌شود
+ *      (موقعیت: frontend/public/images/products/admin/ در persistent disk یا ریپو).
  *
  * با `npm run seed:admin-products` این محصولات روی هر دیتابیسی دوباره ثبت می‌شوند.
- * روشن/خاموش: PRODUCT_SNIPPETS=true|false (پیش‌فرض: فقط بیرون از production روشن است،
- * چون دیسک سرورهای ابری مثل Render ماندگار نیست).
+ * روشن/خاموش: PRODUCT_SNIPPETS=true|false (پیش‌فرض: بیرون از production روشن، در production خاموش تا Render disk تنظیم شود).
+ * Persistent disk: PRODUCTS_PERSISTENT_DIR=/var/persistent/products (Render render.yaml).
  */
 import { copyFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Category } from '../models/index.js';
 import { uploadsRoot } from '../config/cloudinary.js';
+import { paths } from '../config/paths.js';
 
-const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const repoRoot = path.resolve(backendRoot, '..');
-const SEED_DIR = path.join(backendRoot, 'src', 'seed');
-const STORE_FILE = path.join(SEED_DIR, 'adminProducts.json');
-const CODE_FILE = path.join(SEED_DIR, 'adminProducts.js');
-const PUBLIC_URL_DIR = '/images/products/admin/';
-const PUBLIC_ABS_DIR = path.join(repoRoot, 'frontend', 'public', 'images', 'products', 'admin');
+const SEED_DIR = paths.seedDir;
+const STORE_FILE = paths.adminProductsJson;
+const CODE_FILE = paths.adminProductsJs;
+const PUBLIC_URL_DIR = paths.publicImageUrl;
+const PUBLIC_ABS_DIR = paths.publicImageDir;
 
 /** ترتیب کلیدها دقیقاً مثل فایل‌های seed فعلی. */
 const FIELDS = [
