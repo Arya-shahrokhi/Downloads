@@ -13,7 +13,9 @@
     "images:fixed": "node src/seed/applyFixedImages.js",
     "seo:migrate": "node src/seed/migrateSeo.js",
     "seo:audit": "node src/seed/auditSeo.js",
-    "link:check": "node src/seed/checkLinks.js"
+    "link:check": "node src/seed/checkLinks.js",
+    "pricing:backfill": "node src/seed/backfillCosts.js",
+    "pricing:import": "node src/seed/importDailyCosts.js"
   },
   "nodemonConfig": {
     "ignore": ["src/seed/adminProducts.js", "src/seed/adminProducts.json", "src/seed/*.tmp", "uploads/*"]
