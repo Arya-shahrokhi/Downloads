@@ -36,6 +36,13 @@ const productSchema = new mongoose.Schema(
     // Existing documents simply don't have these fields; the defaults keep them valid.
     seoTitle: { type: String, trim: true, maxlength: 90, default: '' },
     seoDescription: { type: String, trim: true, maxlength: 200, default: '' },
+
+    // --- قیمت‌گذاری خودکار (pricingService). null = این محصول قیمت روز ندارد و price دستی است. ---
+    costPerKg: { type: Number, min: 0, default: null }, // قیمت روز خرید هر کیلو / لیتر
+    costPerUnit: { type: Number, min: 0, default: null }, // برای محصولات «عدد» / «بسته»
+    packagingCost: { type: Number, min: 0, default: null }, // جایگزین پله‌ی بسته‌بندی سراسری
+    autoPrice: { type: Boolean, default: true }, // false = قیمت دستی، بازمحاسبه دستش نمی‌زند
+    costUpdatedAt: { type: Date, default: null },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
