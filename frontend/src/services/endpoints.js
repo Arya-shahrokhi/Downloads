@@ -12,6 +12,16 @@ export const authApi = {
   addAddress: (payload) => api.post('/auth/me/addresses', payload),
   updateAddress: (id, payload) => api.put(`/auth/me/addresses/${id}`, payload),
   removeAddress: (id) => api.delete(`/auth/me/addresses/${id}`),
+  // ایمیل
+  verifyEmail: (token) => api.post('/auth/verify-email', { token }),
+  resendVerification: () => api.post('/auth/verify-email/resend'),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
+};
+
+export const contactApi = {
+  send: (payload) => api.post('/contact', payload),
+  testEmail: (to) => api.post('/contact/test-email', to ? { to } : {}),
 };
 
 export const productApi = {

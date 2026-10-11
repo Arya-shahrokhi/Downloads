@@ -1,11 +1,45 @@
 import { useState } from 'react';
-import { FiLock } from 'react-icons/fi';
+import { FiCheckCircle, FiLock, FiMail } from 'react-icons/fi';
 import Input from '../../components/ui/Input.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Seo from '../../components/common/Seo.jsx';
 import { authApi } from '../../services/endpoints.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useSubmit } from '../../hooks/index.js';
+
+function EmailStatus() {
+  const { user } = useAuth();
+  const toast = useToast();
+  const [resend, resending] = useSubmit(async () => {
+    try {
+      const { message } = await authApi.resendVerification();
+      toast.success(message);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  });
+
+  if (!user) return null;
+
+  return (
+    <div className="mb-10 max-w-md rounded-2xl border hairline p-5 text-sm leading-7">
+      {user.emailVerified ? (
+        <p className="flex items-center gap-2 text-moss-700">
+          <FiCheckCircle size={18} /> ایمیل <span dir="ltr" className="font-semibold">{user.email}</span> تأیید شده است.
+        </p>
+      ) : (
+        <>
+          <p className="flex items-center gap-2 text-ink-700">
+            <FiMail size={18} /> ایمیل <span dir="ltr" className="font-semibold">{user.email}</span> هنوز تأیید نشده.
+          </p>
+          <p className="mt-1 text-ink-500">برای دریافت اعلان‌های سفارش و بازیابی امن رمز، ایمیل را تأیید کنید.</p>
+          <Button size="sm" variant="outline" className="mt-3" onClick={resend} loading={resending}>ارسال دوباره‌ی لینک تأیید</Button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function Security() {
   const toast = useToast();
@@ -34,7 +68,9 @@ export default function Security() {
 
   return (
     <>
-      <Seo title="تغییر رمز عبور" />
+      <Seo title="امنیت حساب" />
+      <EmailStatus />
+
       <h1 className="text-xl font-extrabold tracking-tight">تغییر رمز عبور</h1>
       <p className="mt-2 max-w-[52ch] text-sm leading-7 text-ink-500">
         بعد از تغییر رمز، از تمام دستگاه‌های دیگر خارج می‌شوید. همین دستگاه فعال می‌ماند.

@@ -8,7 +8,11 @@
  *  - Private areas (account, admin, checkout, cart, auth) are `noindex, nofollow`.
  */
 
-export const PRIVATE_PREFIXES = ['/admin', '/account', '/checkout', '/cart', '/login', '/register', '/404'];
+export const PRIVATE_PREFIXES = [
+  '/admin', '/account', '/checkout', '/cart', '/login', '/register', '/404',
+  // email flows: token links must work (HTTP 200) but never be indexed
+  '/forgot-password', '/reset-password', '/verify-email',
+];
 
 /** Query params that create a genuinely different, indexable page. */
 const INDEXABLE_PARAMS = ['page'];

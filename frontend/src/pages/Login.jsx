@@ -57,6 +57,9 @@ export default function Login() {
               value={form.password} error={errors.password}
               onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
             />
+            <div className="-mt-1 text-left text-xs">
+              <Link to="/forgot-password" className="font-semibold text-moss-700 hover:underline">رمز عبور را فراموش کرده‌اید؟</Link>
+            </div>
             <Button type="submit" size="lg" className="w-full" loading={submitting}>ورود</Button>
           </form>
 

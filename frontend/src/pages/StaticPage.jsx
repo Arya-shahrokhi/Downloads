@@ -1,4 +1,5 @@
 import Seo from '../components/common/Seo.jsx';
+import ContactForm from '../components/common/ContactForm.jsx';
 
 const CONTENT = {
   about: {
@@ -17,7 +18,7 @@ const CONTENT = {
       'تلفن: ۰۹۰۲۷۴۰۳۳۳۱',
       'ایمیل: info@kalavaran.ir',
       'نشانی: ونک، ملاصدرا، شیراز شمالی، صائب تبریزی غربی، پلاک ۲۵، طبقه دوم',
-      'برای سفارش‌های عمده و رستوران‌ها، از طریق ایمیل با موضوع «سفارش عمده» بنویسید.',
+      'برای سفارش‌های عمده و رستوران‌ها، از طریق فرم زیر یا ایمیل با موضوع «سفارش عمده» بنویسید.',
     ],
   },
   terms: {
@@ -60,6 +61,11 @@ export default function StaticPage({ page }) {
           <p key={i} className="mb-5 text-[0.95rem] leading-9 text-ink-700">{p}</p>
         ))}
       </article>
+      {page === 'contact' && (
+        <section className="wrap max-w-[70ch] pb-16">
+          <ContactForm />
+        </section>
+      )}
     </>
   );
 }
