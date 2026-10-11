@@ -36,6 +36,15 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     tokenVersion: { type: Number, default: 0, select: false },
     lastLoginAt: Date,
+
+    // --- ایمیل ---
+    emailVerified: { type: Boolean, default: false },
+    emailVerifiedAt: Date,
+    // فقط هش sha256 توکن‌ها ذخیره می‌شود، نه خود توکن
+    emailVerifyTokenHash: { type: String, select: false, index: { sparse: true } },
+    emailVerifyExpires: { type: Date, select: false },
+    passwordResetTokenHash: { type: String, select: false, index: { sparse: true } },
+    passwordResetExpires: { type: Date, select: false },
   },
   {
     timestamps: true,
@@ -44,6 +53,10 @@ const userSchema = new mongoose.Schema(
       transform(_doc, ret) {
         delete ret.password;
         delete ret.tokenVersion;
+        delete ret.emailVerifyTokenHash;
+        delete ret.emailVerifyExpires;
+        delete ret.passwordResetTokenHash;
+        delete ret.passwordResetExpires;
         delete ret.__v;
         return ret;
       },

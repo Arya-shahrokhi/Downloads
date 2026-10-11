@@ -35,3 +35,25 @@ export const refreshLimiter = rateLimit({
 });
 
 export const writeLimiter = rateLimit({ windowMs: 60 * 1000, max: 40, handler });
+
+/**
+ * هر درخواستی که ایمیل می‌فرستد (بازیابی رمز، ارسال دوباره‌ی تأیید):
+ * درخواست موفق هم شمرده می‌شود، وگرنه می‌شد صندوق یک نفر را با ایمیل پر کرد
+ * یا اعتبار SMTP را سوزاند.
+ */
+export const emailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler,
+});
+
+/** فرم تماس با ما: ۵ پیام در ساعت برای هر IP. */
+export const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler,
+});

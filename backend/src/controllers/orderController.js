@@ -6,6 +6,22 @@ import { getPaging, meta } from '../utils/pagination.js';
 import ApiError from '../utils/ApiError.js';
 import { buildCartPayload, cartOwner, getOrCreateCart } from '../services/cartService.js';
 import { getPaymentProvider } from '../services/paymentService.js';
+import { emailService } from '../services/email/index.js';
+
+/**
+ * ایمیل تغییر وضعیت به مشتری. هرگز await نمی‌شود و هرگز خطا پرتاب نمی‌کند:
+ * مشکل ایمیل نباید تغییر وضعیت سفارش را بشکند.
+ */
+const notifyCustomer = async (order, knownUser) => {
+  try {
+    const customer = knownUser && String(knownUser._id) === String(order.user)
+      ? knownUser
+      : await User.findById(order.user).select('name email phone');
+    if (customer) emailService.orderStatusChanged(order, customer);
+  } catch (err) {
+    console.error(`[mail] اعلان سفارش ${order.orderNumber} ناموفق بود: ${err.message}`);
+  }
+};
 
 export const listOrders = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPaging(req.query, { defaultLimit: 20 });
@@ -48,6 +64,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   order.orderStatus = next;
   order.statusHistory.push({ status: next, by: req.user._id });
   await order.save();
+  void notifyCustomer(order);
   return ok(res, { order: { ...order.toObject(), nextStatuses: STATUS_FLOW[next] || [] } }, 'وضعیت سفارش تغییر کرد');
 });
 
@@ -160,6 +177,9 @@ export const createOrder = asyncHandler(async (req, res) => {
   // سبد بعد از سفارش موفق خالی می‌شود
   await Cart.updateOne({ _id: cart._id }, { $set: { items: [], couponCode: null } });
 
+  // تأیید سفارش به مشتری + هشدار سفارش جدید به ادمین (پس‌زمینه)
+  emailService.orderPlaced(order, req.user);
+
   return created(res, {
     order: { ...order.toObject(), nextStatuses: STATUS_FLOW[order.orderStatus] || [] },
     redirectUrl: payment?.redirectUrl || null,
@@ -226,6 +246,9 @@ export const cancelOrder = asyncHandler(async (req, res) => {
   if (order.paymentStatus === 'PAID') order.paymentStatus = 'REFUNDED';
   order.statusHistory.push({ status: ORDER_STATUS.CANCELLED, by: req.user._id });
   await order.save();
+
+  void notifyCustomer(order, req.user);
+  if (isOwner) emailService.orderCancelledByCustomer(order, req.user);
 
   return ok(res, { order: { ...order.toObject(), nextStatuses: [] } }, 'سفارش لغو شد');
 });

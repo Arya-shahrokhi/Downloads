@@ -32,6 +32,8 @@ const cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
 const cloudKey = process.env.CLOUDINARY_API_KEY || '';
 const cloudSecret = process.env.CLOUDINARY_API_SECRET || '';
 
+const smtpPort = num(process.env.SMTP_PORT, 587);
+
 export const env = {
   nodeEnv,
   isProd,
@@ -79,6 +81,23 @@ export const env = {
     flat: num(process.env.SHIPPING_FLAT, 49000),
     freeThreshold: num(process.env.FREE_SHIPPING_THRESHOLD, 1000000),
   },
+
+  /**
+   * ایمیل: فقط وقتی SMTP_HOST تنظیم شده باشد واقعاً ارسال می‌شود.
+   * در غیر این صورت ایمیل‌ها در توسعه در ترمینال چاپ می‌شوند تا جریان
+   * ثبت‌نام و بازیابی رمز بدون سرور ایمیل هم قابل تست باشد.
+   */
+  mail: {
+    enabled: Boolean(process.env.SMTP_HOST),
+    host: process.env.SMTP_HOST || '',
+    port: smtpPort,
+    secure: bool(process.env.SMTP_SECURE, smtpPort === 465),
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.MAIL_FROM || 'کالاوران <no-reply@kalavaran.ir>',
+    replyTo: process.env.MAIL_REPLY_TO || '',
+    adminTo: list(process.env.MAIL_ADMIN_TO, [process.env.ADMIN_EMAIL || 'admin@attari.local']),
+  },
 };
 
 /**
@@ -105,6 +124,10 @@ if (isProd && !process.env.SITE_URL) {
 }
 if (isProd && /localhost|127\.0\.0\.1/.test(siteUrl)) {
   console.warn('[env] SITE_URL در پرودکشن به localhost اشاره می‌کند؛ sitemap و canonical اشتباه خواهند بود.');
+}
+if (isProd && !env.mail.enabled) {
+  // Not fatal: the shop works, but users never receive verification/reset/order emails.
+  console.warn('[env] SMTP_HOST تعریف نشده است؛ هیچ ایمیلی (تأیید، بازیابی رمز، سفارش) ارسال نمی‌شود.');
 }
 
 if (problems.length) {
