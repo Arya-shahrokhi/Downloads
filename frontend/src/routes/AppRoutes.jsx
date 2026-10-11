@@ -31,6 +31,9 @@ const NotFound = lazy(() => import('../pages/NotFound.jsx'));
 // احراز هویت
 const Login = lazy(() => import('../pages/Login.jsx'));
 const Register = lazy(() => import('../pages/Register.jsx'));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword.jsx'));
+const ResetPassword = lazy(() => import('../pages/ResetPassword.jsx'));
+const VerifyEmail = lazy(() => import('../pages/VerifyEmail.jsx'));
 
 // حساب کاربری
 const AccountLayout = lazy(() => import('../layouts/AccountLayout.jsx'));
@@ -90,6 +93,9 @@ export default function AppRoutes() {
 
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="verify-email" element={<VerifyEmail />} />
 
           {/* نیازمند ورود */}
           <Route element={<ProtectedRoute />}>

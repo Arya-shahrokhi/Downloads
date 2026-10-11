@@ -9,6 +9,7 @@ import orderRoutes from './orderRoutes.js';
 import userRoutes from './userRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import reviewRoutes from './reviewRoutes.js';
+import contactRoutes from './contactRoutes.js';
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use('/users', userRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/articles', articleRoutes);
 router.use('/admin', adminRoutes);
+router.use('/contact', contactRoutes);
 
 export default router;

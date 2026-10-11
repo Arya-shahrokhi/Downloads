@@ -7,6 +7,9 @@ import {
   REFRESH_COOKIE, refreshCookieOptions, signAccessToken, signRefreshToken, verifyRefreshToken,
 } from '../utils/tokens.js';
 import { Cart } from '../models/Cart.js';
+import {
+  createToken, emailService, hashToken, RESET_TTL_MS, VERIFY_TTL_MS,
+} from '../services/email/index.js';
 
 const issueSession = (res, user) => {
   res.cookie(REFRESH_COOKIE, signRefreshToken(user), refreshCookieOptions());
@@ -29,14 +32,26 @@ const mergeGuestCart = async (req, user) => {
   await guestCart.deleteOne();
 };
 
+/** توکن تأیید ایمیل تازه روی کاربر می‌گذارد (save با فراخواننده) و توکن خام را برمی‌گرداند. */
+const armVerification = (user) => {
+  const { token, hash } = createToken();
+  user.emailVerified = false;
+  user.emailVerifyTokenHash = hash;
+  user.emailVerifyExpires = new Date(Date.now() + VERIFY_TTL_MS);
+  return token;
+};
+
 export const register = asyncHandler(async (req, res) => {
   const { name, email, phone, password } = req.body;
   if (await User.exists({ $or: [{ email }, { phone }] })) {
     throw ApiError.conflict('کاربری با این ایمیل یا شماره موبایل ثبت شده است');
   }
-  const user = await User.create({ name, email, phone, password });
+  const user = new User({ name, email, phone, password });
+  const token = armVerification(user);
+  await user.save();
+  emailService.verification(user, token);
   await mergeGuestCart(req, user);
-  return created(res, issueSession(res, user), 'حساب شما با موفقیت ساخته شد');
+  return created(res, issueSession(res, user), 'حساب شما ساخته شد؛ لینک تأیید به ایمیل‌تان ارسال شد');
 });
 
 export const login = asyncHandler(async (req, res) => {
@@ -83,9 +98,20 @@ export const me = asyncHandler(async (req, res) => ok(res, { user: req.user.toJS
 
 export const updateMe = asyncHandler(async (req, res) => {
   const updates = pick(req.body, ['name', 'email', 'phone']);
+  const emailChanged = Boolean(updates.email) && updates.email !== req.user.email;
+  if (emailChanged && await User.exists({ email: updates.email, _id: { $ne: req.user._id } })) {
+    throw ApiError.conflict('این ایمیل قبلاً ثبت شده است');
+  }
   Object.assign(req.user, updates);
+  // ایمیل جدید باید دوباره تأیید شود
+  const token = emailChanged ? armVerification(req.user) : null;
   await req.user.save({ validateModifiedOnly: true });
-  return ok(res, { user: req.user.toJSON() }, 'پروفایل به‌روزرسانی شد');
+  if (token) emailService.verification(req.user, token);
+  return ok(
+    res,
+    { user: req.user.toJSON() },
+    token ? 'پروفایل به‌روزرسانی شد؛ لینک تأیید به ایمیل جدید ارسال شد' : 'پروفایل به‌روزرسانی شد',
+  );
 });
 
 export const changePassword = asyncHandler(async (req, res) => {
@@ -96,8 +122,79 @@ export const changePassword = asyncHandler(async (req, res) => {
   user.password = req.body.newPassword;
   user.tokenVersion = (user.tokenVersion ?? 0) + 1; // ابطال نشست‌های دیگر
   await user.save();
+  emailService.passwordChanged(user);
   return ok(res, {}, 'رمز عبور تغییر کرد');
 });
+
+// ---------------------------------------------------------------------------
+// ایمیل: تأیید و بازیابی رمز
+// ---------------------------------------------------------------------------
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const user = await User.findOne({
+    emailVerifyTokenHash: hashToken(req.body.token),
+    emailVerifyExpires: { $gt: new Date() },
+  }).select('+emailVerifyTokenHash +emailVerifyExpires');
+  if (!user) throw ApiError.badRequest('لینک تأیید نامعتبر است یا منقضی شده؛ از صفحه‌ی حساب دوباره درخواست دهید');
+
+  user.emailVerified = true;
+  user.emailVerifiedAt = new Date();
+  user.emailVerifyTokenHash = undefined;
+  user.emailVerifyExpires = undefined;
+  await user.save({ validateModifiedOnly: true });
+  return ok(res, { user: user.toJSON() }, 'ایمیل شما تأیید شد');
+});
+
+export const resendVerification = asyncHandler(async (req, res) => {
+  if (req.user.emailVerified) return ok(res, {}, 'ایمیل شما قبلاً تأیید شده است');
+  const token = armVerification(req.user);
+  await req.user.save({ validateModifiedOnly: true });
+  emailService.verification(req.user, token);
+  return ok(res, {}, 'لینک تأیید دوباره ارسال شد؛ صندوق ایمیل (و پوشه اسپم) را ببینید');
+});
+
+/**
+ * پاسخ همیشه یکسان است، چه حساب وجود داشته باشد چه نه، تا از این endpoint
+ * نشود فهمید چه ایمیل‌هایی در سایت ثبت‌نام کرده‌اند.
+ */
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.body.email, isActive: true });
+  if (user) {
+    const { token, hash } = createToken();
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { passwordResetTokenHash: hash, passwordResetExpires: new Date(Date.now() + RESET_TTL_MS) } },
+    );
+    emailService.passwordReset(user, token);
+  }
+  return ok(res, {}, 'اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی رمز برایش ارسال شد');
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const user = await User.findOne({
+    passwordResetTokenHash: hashToken(req.body.token),
+    passwordResetExpires: { $gt: new Date() },
+    isActive: true,
+  }).select('+password +tokenVersion +passwordResetTokenHash +passwordResetExpires');
+  if (!user) throw ApiError.badRequest('لینک بازیابی نامعتبر است یا منقضی شده؛ دوباره درخواست دهید');
+
+  user.password = req.body.password;
+  user.passwordResetTokenHash = undefined; // یک‌بار مصرف
+  user.passwordResetExpires = undefined;
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1; // همه‌ی نشست‌ها بسته می‌شوند
+  // باز کردن لینکی که به این ایمیل رفته، یعنی مالکیت ایمیل ثابت شده
+  if (!user.emailVerified) {
+    user.emailVerified = true;
+    user.emailVerifiedAt = new Date();
+  }
+  await user.save();
+  emailService.passwordChanged(user);
+  return ok(res, {}, 'رمز عبور جدید ثبت شد؛ حالا وارد شوید');
+});
+
+// ---------------------------------------------------------------------------
+// آدرس‌ها
+// ---------------------------------------------------------------------------
 
 export const listAddresses = asyncHandler(async (req, res) =>
   ok(res, { addresses: req.user.addresses }, 'لیست آدرس‌ها'));

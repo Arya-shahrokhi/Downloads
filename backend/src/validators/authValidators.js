@@ -29,6 +29,21 @@ export const changePasswordSchema = {
   body: z.object({ currentPassword: z.string().min(1, 'رمز فعلی را وارد کنید'), newPassword: password }).strict(),
 };
 
+// توکن‌های ایمیل: ۳۲ بایت تصادفی به‌صورت hex
+const emailToken = z.string().trim().regex(/^[a-f0-9]{64}$/, 'لینک نامعتبر است');
+
+export const verifyEmailSchema = {
+  body: z.object({ token: emailToken }).strict(),
+};
+
+export const forgotPasswordSchema = {
+  body: z.object({ email: z.string().trim().toLowerCase().email('ایمیل معتبر نیست') }).strict(),
+};
+
+export const resetPasswordSchema = {
+  body: z.object({ token: emailToken, password }).strict(),
+};
+
 export const addressSchema = {
   body: z.object({
     title: z.string().trim().max(40).optional(),
