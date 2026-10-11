@@ -13,7 +13,7 @@ import { smsApi } from '../services/endpoints.js';
 const strength = (pw) => {
   let score = 0;
   if (pw.length >= 8) score++;
-  if (/[A-Za-z]/.test(pw) && /\\d/.test(pw)) score++;
+  if (/[A-Za-z]/.test(pw) && /\d/.test(pw)) score++;
   if (pw.length >= 12) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   return score;
@@ -50,7 +50,7 @@ export default function Register() {
   const score = strength(form.password);
 
   const sendOtp = async () => {
-    if (!/^09\\d{9}$/.test(form.phone)) {
+    if (!/^09\d{9}$/.test(form.phone)) {
       setErrors((e) => ({ ...e, phone: 'شماره موبایل با ۰۹ شروع شود و ۱۱ رقم باشد' }));
       return;
     }
@@ -68,7 +68,7 @@ export default function Register() {
   };
 
   const verifyOtp = async () => {
-    if (!/^\\d{6}$/.test(otp)) {
+    if (!/^\d{6}$/.test(otp)) {
       toast.error('کد تایید باید ۶ رقم باشد');
       return;
     }
@@ -89,10 +89,10 @@ export default function Register() {
     e.preventDefault();
     const next = {};
     if (form.name.trim().length < 3) next.name = 'نام کامل خود را بنویسید';
-    if (!/^\\S+@\\S+\\.\\S+$/.test(form.email)) next.email = 'ایمیل معتبر نیست';
-    if (!/^09\\d{9}$/.test(form.phone)) next.phone = 'شماره موبایل با ۰۹ شروع شود و ۱۱ رقم باشد';
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'ایمیل معتبر نیست';
+    if (!/^09\d{9}$/.test(form.phone)) next.phone = 'شماره موبایل با ۰۹ شروع شود و ۱۱ رقم باشد';
     if (form.password.length < 8) next.password = 'رمز عبور حداقل ۸ کاراکتر باشد';
-    else if (!/[A-Za-zآ-ی]/.test(form.password) || !/\\d/.test(form.password)) next.password = 'رمز باید حرف و رقم داشته باشد';
+    else if (!/[A-Za-zآ-ی]/.test(form.password) || !/\d/.test(form.password)) next.password = 'رمز باید حرف و رقم داشته باشد';
     if (otpRequired && verifiedPhone !== form.phone) next.phone = 'ابتدا شماره موبایل را با کد پیامکی تایید کنید';
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -133,12 +133,12 @@ export default function Register() {
             {smsEnabled && (
               <div className="space-y-3 rounded-xl border border-bone-200 p-4">
                 <p className="text-sm text-ink-600">تایید شماره موبایل با پیامک{otpRequired ? ' (الزامی)' : ' (اختیاری)'}</p>
-                <Button type="button" variant="outline" className="w-full" loading={sendingOtp} disabled={sendingOtp || !/^09\\d{9}$/.test(form.phone)} onClick={sendOtp}>
+                <Button type="button" variant="outline" className="w-full" loading={sendingOtp} disabled={sendingOtp || !/^09\d{9}$/.test(form.phone)} onClick={sendOtp}>
                   {otpSent ? 'ارسال دوباره کد تایید' : 'ارسال کد تایید'}
                 </Button>
                 {otpSent && (
                   <>
-                    <Input label="کد ۶ رقمی پیامک‌شده" icon={FiPhone} inputMode="numeric" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\\D/g, '').slice(0, 6))} />
+                    <Input label="کد ۶ رقمی پیامک‌شده" icon={FiPhone} inputMode="numeric" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} />
                     <Button type="button" variant="outline" className="w-full" loading={verifyingOtp} disabled={verifyingOtp || otp.length !== 6} onClick={verifyOtp}>تایید شماره</Button>
                   </>
                 )}
