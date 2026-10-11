@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requestRegistrationOtp, verifyRegistrationOtp } from '../controllers/smsController.js';
+import { getSmsStatus, requestRegistrationOtp, verifyRegistrationOtp } from '../controllers/smsController.js';
 import { validate } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimiters.js';
 import { persianPhone } from '../validators/common.js';
 
 const router = Router();
+
+router.get('/status', getSmsStatus);
 
 router.post('/otp/register/request', authLimiter, validate({
   body: z.object({ phone: persianPhone }).strict(),
