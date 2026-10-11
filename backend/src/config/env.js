@@ -79,6 +79,16 @@ export const env = {
     flat: num(process.env.SHIPPING_FLAT, 49000),
     freeThreshold: num(process.env.FREE_SHIPPING_THRESHOLD, 1000000),
   },
+
+  sms: {
+    enabled: bool(process.env.SMS_ENABLED, false),
+    kavenegarApiKey: process.env.KAVENEGAR_API_KEY || '',
+    sender: process.env.KAVENEGAR_SENDER || '',
+    otpTemplate: process.env.KAVENEGAR_OTP_TEMPLATE || '',
+    otpSecret: process.env.SMS_OTP_SECRET || 'development-only-change-this-secret',
+    otpRequired: bool(process.env.SMS_OTP_REQUIRED, false),
+    adminPhone: process.env.SMS_ADMIN_PHONE || '',
+  },
 };
 
 /**
