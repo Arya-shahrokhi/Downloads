@@ -12,7 +12,7 @@ const normalizeIranPhone = (value) => {
 
 const requestKavenegar = async (method, params) => {
   if (!env.sms.kavenegarApiKey) throw new Error('KAVENEGAR_API_KEY تنظیم نشده است');
-  const url = new URL(`${baseUrl}/${env.sms.kavenegarApiKey}/sms/${method}.json`);
+  const url = new URL(`${baseUrl}/${env.sms.kavenegarApiKey}/${method}.json`);
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
   });
@@ -31,7 +31,7 @@ export const smsEnabled = () => Boolean(env.sms.enabled && env.sms.kavenegarApiK
 export const sendSms = async (to, message) => {
   if (!env.sms.enabled) return { skipped: true, reason: 'SMS_DISABLED' };
   const receptor = normalizeIranPhone(to);
-  await requestKavenegar('send', { receptor, message, sender: env.sms.sender });
+  await requestKavenegar('sms/send', { receptor, message, sender: env.sms.sender });
   return { sent: true };
 };
 
@@ -48,7 +48,7 @@ export const sendOtpSms = async (to, code) => {
     });
   } else {
     // Use this only if the provider account permits ordinary SMS for OTP.
-    await requestKavenegar('send', {
+    await requestKavenegar('sms/send', {
       receptor,
       message: `کد تایید کالاوران: ${code}\nاین کد را در اختیار دیگران قرار ندهید.`,
       sender: env.sms.sender,
