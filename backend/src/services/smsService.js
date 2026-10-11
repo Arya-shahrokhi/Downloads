@@ -1,35 +1,34 @@
-const TWILIO_API = 'https://api.twilio.com/2010-04-01/Accounts';
+const MELIPAYAMAK_URL = 'https://rest.payamak-panel.com/api/SendSMS/SendSMS';
 
-/** شماره ایرانی 09xxxxxxxxx را به فرمت E.164 (+989...) تبدیل می‌کند. */
-export function toE164(phone) {
-  const digits = String(phone || '').replace(/\D/g, '');
-  if (!digits) return null;
-  if (digits.startsWith('98')) return `+${digits}`;
-  if (digits.startsWith('0')) return `+98${digits.slice(1)}`;
-  return `+${digits}`;
+/** شماره را به فرمت محلی 09xxxxxxxxx تبدیل می‌کند (ملی‌پیامک همین فرمت را می‌خواهد). */
+export function normalizeIranPhone(phone) {
+  let digits = String(phone || '').replace(/\D/g, '');
+  if (digits.startsWith('0098')) digits = digits.slice(4);
+  else if (digits.startsWith('98') && digits.length > 10) digits = digits.slice(2);
+  if (digits.length === 10 && digits.startsWith('9')) digits = `0${digits}`;
+  return digits || null;
 }
 
 /**
- * ارسال پیامک از طریق Twilio REST API. اگر تنظیمات ناقص باشد، بی‌صدا رد می‌شود
+ * ارسال پیامک از طریق ملی‌پیامک. اگر تنظیمات ناقص باشد، بی‌صدا رد می‌شود
  * تا ثبت سفارش هرگز به خاطر پیامک خراب نشود.
  */
-export async function sendSms(to, body) {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_NUMBER;
-  const target = toE164(to);
-  if (!sid || !token || !from || !target) return { skipped: true };
+export async function sendSms(to, text) {
+  const username = process.env.MELIPAYAMAK_USERNAME;
+  const password = process.env.MELIPAYAMAK_PASSWORD;
+  const from = process.env.MELIPAYAMAK_FROM;
+  const target = normalizeIranPhone(to);
+  if (!username || !password || !from || !target) return { skipped: true };
 
-  const res = await fetch(`${TWILIO_API}/${sid}/Messages.json`, {
+  const res = await fetch(MELIPAYAMAK_URL, {
     method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({ To: target, From: from, Body: body }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password, to: target, from, text, isflash: false }),
   });
-  if (!res.ok) throw new Error(`Twilio SMS failed with status ${res.status}`);
-  return res.json();
+  if (!res.ok) throw new Error(`Melipayamak SMS failed with status ${res.status}`);
+  const data = await res.json();
+  if (data.RetStatus !== 1) throw new Error(`Melipayamak error: ${data.StrRetStatus || data.RetStatus}`);
+  return data;
 }
 
 /** متن پیامک سفارش جدید برای ادمین. شماره فاکتور همان orderNumber است. */
