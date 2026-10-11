@@ -79,6 +79,16 @@ export const env = {
     flat: num(process.env.SHIPPING_FLAT, 49000),
     freeThreshold: num(process.env.FREE_SHIPPING_THRESHOLD, 1000000),
   },
+
+  sms: {
+    enabled: bool(process.env.SMS_ENABLED, false),
+    kavenegarApiKey: process.env.KAVENEGAR_API_KEY || '',
+    sender: process.env.KAVENEGAR_SENDER || '',
+    otpTemplate: process.env.KAVENEGAR_OTP_TEMPLATE || '',
+    otpSecret: process.env.SMS_OTP_SECRET || 'development-only-change-this-secret',
+    otpRequired: bool(process.env.SMS_OTP_REQUIRED, false),
+    adminPhone: process.env.SMS_ADMIN_PHONE || '',
+  },
 };
 
 /**
@@ -99,6 +109,12 @@ if (isProd && env.jwt.refreshSecret.length < 32) {
   problems.push('JWT_REFRESH_SECRET در پرودکشن باید حداقل ۳۲ کاراکتر باشد');
 }
 if (!env.mongoUri) problems.push('MONGO_URI تعریف نشده است');
+if (isProd && env.sms.enabled && env.sms.otpSecret === 'development-only-change-this-secret') {
+  problems.push('برای پیامک در پروداکشن، SMS_OTP_SECRET امن تعریف کنید');
+}
+if (isProd && env.sms.otpRequired && !env.sms.enabled) {
+  problems.push('برای الزام تایید موبایل، SMS_ENABLED باید true باشد');
+}
 if (isProd && !process.env.SITE_URL) {
   // Not fatal: falls back to CLIENT_ORIGIN, but canonical URLs must be exact.
   console.warn(`[env] SITE_URL تعریف نشده است؛ آدرس canonical از CLIENT_ORIGIN گرفته شد: ${siteUrl}`);

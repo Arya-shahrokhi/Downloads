@@ -77,3 +77,9 @@ export const adminApi = {
     headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000, onUploadProgress,
   }),
 };
+
+export const smsApi = {
+  status: () => api.get('/sms/status'),
+  requestRegistrationOtp: (phone) => api.post('/sms/otp/register/request', { phone }),
+  verifyRegistrationOtp: (phone, code) => api.post('/sms/otp/register/verify', { phone, code }),
+};

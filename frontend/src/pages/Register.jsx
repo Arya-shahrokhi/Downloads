@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi';
 import Input from '../components/ui/Input.jsx';
@@ -8,6 +8,7 @@ import Seo from '../components/common/Seo.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { useSubmit } from '../hooks/index.js';
+import { smsApi } from '../services/endpoints.js';
 
 const strength = (pw) => {
   let score = 0;
@@ -26,8 +27,63 @@ export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [errors, setErrors] = useState({});
+  const [smsEnabled, setSmsEnabled] = useState(false);
+  const [otpRequired, setOtpRequired] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    smsApi.status().then((result) => {
+      if (!active) return;
+      setSmsEnabled(Boolean(result.data?.enabled));
+      setOtpRequired(Boolean(result.data?.otpRequired));
+    }).catch(() => {
+      // اگر وضعیت سرویس خوانده نشد، سرور همچنان مرجع نهایی الزام تایید است.
+    });
+    return () => { active = false; };
+  }, []);
 
   const score = strength(form.password);
+
+  const sendOtp = async () => {
+    if (!/^09\d{9}$/.test(form.phone)) {
+      setErrors((e) => ({ ...e, phone: 'شماره موبایل با ۰۹ شروع شود و ۱۱ رقم باشد' }));
+      return;
+    }
+    setSendingOtp(true);
+    try {
+      const result = await smsApi.requestRegistrationOtp(form.phone);
+      setOtpSent(true);
+      setVerifiedPhone('');
+      toast.success(result.message || 'کد تایید ارسال شد');
+    } catch (err) {
+      toast.error(err.message || 'ارسال کد ناموفق بود');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (!/^\d{6}$/.test(otp)) {
+      toast.error('کد تایید باید ۶ رقم باشد');
+      return;
+    }
+    setVerifyingOtp(true);
+    try {
+      const result = await smsApi.verifyRegistrationOtp(form.phone, otp);
+      setVerifiedPhone(form.phone);
+      toast.success(result.message || 'شماره موبایل تایید شد');
+    } catch (err) {
+      setVerifiedPhone('');
+      toast.error(err.message || 'تایید کد ناموفق بود');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const [submit, submitting] = useSubmit(async (e) => {
     e.preventDefault();
@@ -37,6 +93,7 @@ export default function Register() {
     if (!/^09\d{9}$/.test(form.phone)) next.phone = 'شماره موبایل با ۰۹ شروع شود و ۱۱ رقم باشد';
     if (form.password.length < 8) next.password = 'رمز عبور حداقل ۸ کاراکتر باشد';
     else if (!/[A-Za-zآ-ی]/.test(form.password) || !/\d/.test(form.password)) next.password = 'رمز باید حرف و رقم داشته باشد';
+    if (otpRequired && verifiedPhone !== form.phone) next.phone = 'ابتدا شماره موبایل را با کد پیامکی تایید کنید';
     setErrors(next);
     if (Object.keys(next).length) return;
 
@@ -64,7 +121,32 @@ export default function Register() {
           <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
             <Input label="نام و نام خانوادگی" icon={FiUser} value={form.name} error={errors.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             <Input label="ایمیل" type="email" icon={FiMail} autoComplete="email" value={form.email} error={errors.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
-            <Input label="شماره موبایل" icon={FiPhone} inputMode="numeric" placeholder="09121234567" className="num" value={form.phone} error={errors.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+            <Input label="شماره موبایل" icon={FiPhone} inputMode="numeric" placeholder="09121234567" className="num" value={form.phone} error={errors.phone} onChange={(e) => {
+              const phone = e.target.value;
+              setForm((f) => ({ ...f, phone }));
+              setVerifiedPhone('');
+              setOtpSent(false);
+              setOtp('');
+              setErrors((old) => ({ ...old, phone: undefined }));
+            }} />
+
+            {smsEnabled && (
+              <div className="space-y-3 rounded-xl border border-bone-200 p-4">
+                <p className="text-sm text-ink-600">تایید شماره موبایل با پیامک{otpRequired ? ' (الزامی)' : ' (اختیاری)'}</p>
+                <Button type="button" variant="outline" className="w-full" loading={sendingOtp} disabled={sendingOtp || !/^09\d{9}$/.test(form.phone)} onClick={sendOtp}>
+                  {otpSent ? 'ارسال دوباره کد تایید' : 'ارسال کد تایید'}
+                </Button>
+                {otpSent && (
+                  <>
+                    <Input label="کد ۶ رقمی پیامک‌شده" icon={FiPhone} inputMode="numeric" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                    <Button type="button" variant="outline" className="w-full" loading={verifyingOtp} disabled={verifyingOtp || otp.length !== 6} onClick={verifyOtp}>تایید شماره</Button>
+                  </>
+                )}
+                {verifiedPhone === form.phone && <p className="text-sm font-semibold text-moss-700">شماره موبایل تایید شد.</p>}
+              </div>
+            )}
+            {otpRequired && !smsEnabled && <p className="text-sm text-berry-700">ثبت‌نام نیازمند تایید پیامکی است اما سرویس پیامک هنوز فعال نشده؛ تنظیمات سرور را بررسی کنید.</p>}
+
             <div>
               <Input label="رمز عبور" type="password" icon={FiLock} autoComplete="new-password" value={form.password} error={errors.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
               {form.password && !errors.password && (

@@ -35,3 +35,13 @@ export const refreshLimiter = rateLimit({
 });
 
 export const writeLimiter = rateLimit({ windowMs: 60 * 1000, max: 40, handler });
+
+
+/** محدودیت مستقل پیامک برای جلوگیری از مصرف ناخواسته اعتبار پنل. */
+export const smsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler,
+});

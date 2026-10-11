@@ -9,11 +9,13 @@ import orderRoutes from './orderRoutes.js';
 import userRoutes from './userRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import reviewRoutes from './reviewRoutes.js';
+import smsRoutes from './smsRoutes.js';
 
 const router = Router();
 
 router.get('/health', (_req, res) => res.json({ success: true, message: 'سرویس فعال است', data: { uptime: process.uptime() } }));
 router.use('/auth', authRoutes);
+router.use('/sms', smsRoutes);
 router.use('/products', productRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/cart', cartRoutes);
