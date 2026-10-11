@@ -6,6 +6,11 @@ import ApiError from '../utils/ApiError.js';
 import { ok } from '../utils/response.js';
 import { normalizeIranPhoneNumber, sendOtpSms } from '../services/smsService.js';
 
+export const getSmsStatus = asyncHandler(async (_req, res) => ok(res, {
+  enabled: Boolean(env.sms.enabled && env.sms.kavenegarApiKey),
+  otpRequired: env.sms.otpRequired,
+}, 'وضعیت پیامک'));
+
 const hashCode = (phone, code) => createHash('sha256')
   .update(`${env.sms.otpSecret}:${phone}:${code}`)
   .digest('hex');
