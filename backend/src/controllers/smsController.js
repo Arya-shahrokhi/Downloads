@@ -24,6 +24,11 @@ export const requestRegistrationOtp = asyncHandler(async (req, res) => {
   try { phone = normalizeIranPhoneNumber(req.body.phone); }
   catch { throw ApiError.badRequest('شماره موبایل ایران معتبر نیست'); }
 
+  const localPhone = phone.startsWith('98') ? `0${phone.slice(2)}` : phone;
+  if (await User.exists({ phone: localPhone })) {
+    throw ApiError.conflict('این شماره موبایل قبلاً ثبت شده است');
+  }
+
   const recent = await SmsOtp.findOne({
     phone, purpose: 'REGISTER', createdAt: { $gte: new Date(Date.now() - 60_000) },
   }).sort({ createdAt: -1 });
