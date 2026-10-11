@@ -32,7 +32,7 @@ export const notifyOrderCreated = async (order, user) => {
   const orderNo = order.orderNumber || String(order._id);
   const customerPhone = order.shippingAddress?.phone || user?.phone;
   const customerMessage = `کالاوران: سفارش ${orderNo} ثبت شد. مبلغ: ${toman(order.total)} تومان. وضعیت: در انتظار تایید.`;
-  const adminPhone = env.sms.adminPhone || env.admin.phone;
+  const adminPhone = env.sms.adminPhone || (process.env.ADMIN_PHONE ? env.admin.phone : '');
   const adminMessage = `سفارش جدید ${orderNo} | ${user?.name || order.shippingAddress?.receiver || 'مشتری'} | ${customerPhone || ''} | ${toman(order.total)} تومان | ${shortItems(order.items)}`;
   await Promise.all([
     safeSend(customerPhone, customerMessage, 'customer order notification'),
