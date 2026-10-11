@@ -6,6 +6,7 @@ import { getPaging, meta } from '../utils/pagination.js';
 import ApiError from '../utils/ApiError.js';
 import { buildCartPayload, cartOwner, getOrCreateCart } from '../services/cartService.js';
 import { getPaymentProvider } from '../services/paymentService.js';
+import { notifyAdminNewOrder } from '../services/smsService.js';
 
 export const listOrders = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPaging(req.query, { defaultLimit: 20 });
@@ -159,6 +160,9 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   // سبد بعد از سفارش موفق خالی می‌شود
   await Cart.updateOne({ _id: cart._id }, { $set: { items: [], couponCode: null } });
+
+  // اعلان پیامکی به ادمین. عمداً await نمی‌شود تا پاسخ کاربر به Twilio گره نخورد.
+  notifyAdminNewOrder(order);
 
   return created(res, {
     order: { ...order.toObject(), nextStatuses: STATUS_FLOW[order.orderStatus] || [] },
