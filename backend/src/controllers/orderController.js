@@ -6,6 +6,7 @@ import { getPaging, meta } from '../utils/pagination.js';
 import ApiError from '../utils/ApiError.js';
 import { buildCartPayload, cartOwner, getOrCreateCart } from '../services/cartService.js';
 import { getPaymentProvider } from '../services/paymentService.js';
+import { notifyOrderCreated, notifyOrderStatus } from '../services/orderSmsNotifications.js';
 
 export const listOrders = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPaging(req.query, { defaultLimit: 20 });
@@ -48,6 +49,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   order.orderStatus = next;
   order.statusHistory.push({ status: next, by: req.user._id });
   await order.save();
+  void notifyOrderStatus(order);
   return ok(res, { order: { ...order.toObject(), nextStatuses: STATUS_FLOW[next] || [] } }, 'وضعیت سفارش تغییر کرد');
 });
 
@@ -159,6 +161,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   // سبد بعد از سفارش موفق خالی می‌شود
   await Cart.updateOne({ _id: cart._id }, { $set: { items: [], couponCode: null } });
+  void notifyOrderCreated(order, req.user);
 
   return created(res, {
     order: { ...order.toObject(), nextStatuses: STATUS_FLOW[order.orderStatus] || [] },
@@ -226,6 +229,7 @@ export const cancelOrder = asyncHandler(async (req, res) => {
   if (order.paymentStatus === 'PAID') order.paymentStatus = 'REFUNDED';
   order.statusHistory.push({ status: ORDER_STATUS.CANCELLED, by: req.user._id });
   await order.save();
+  void notifyOrderStatus(order);
 
   return ok(res, { order: { ...order.toObject(), nextStatuses: [] } }, 'سفارش لغو شد');
 });
