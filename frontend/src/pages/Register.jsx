@@ -133,13 +133,13 @@ export default function Register() {
             {smsEnabled && (
               <div className="space-y-3 rounded-xl border border-bone-200 p-4">
                 <p className="text-sm text-ink-600">تایید شماره موبایل با پیامک{otpRequired ? ' (الزامی)' : ' (اختیاری)'}</p>
-                <Button type="button" variant="secondary" className="w-full" loading={sendingOtp} disabled={sendingOtp || !/^09\\d{9}$/.test(form.phone)} onClick={sendOtp}>
+                <Button type="button" variant="outline" className="w-full" loading={sendingOtp} disabled={sendingOtp || !/^09\\d{9}$/.test(form.phone)} onClick={sendOtp}>
                   {otpSent ? 'ارسال دوباره کد تایید' : 'ارسال کد تایید'}
                 </Button>
                 {otpSent && (
                   <>
                     <Input label="کد ۶ رقمی پیامک‌شده" icon={FiPhone} inputMode="numeric" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\\D/g, '').slice(0, 6))} />
-                    <Button type="button" variant="secondary" className="w-full" loading={verifyingOtp} disabled={verifyingOtp || otp.length !== 6} onClick={verifyOtp}>تایید شماره</Button>
+                    <Button type="button" variant="outline" className="w-full" loading={verifyingOtp} disabled={verifyingOtp || otp.length !== 6} onClick={verifyOtp}>تایید شماره</Button>
                   </>
                 )}
                 {verifiedPhone === form.phone && <p className="text-sm font-semibold text-moss-700">شماره موبایل تایید شد.</p>}
