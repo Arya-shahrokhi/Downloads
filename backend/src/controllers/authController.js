@@ -7,6 +7,8 @@ import {
   REFRESH_COOKIE, refreshCookieOptions, signAccessToken, signRefreshToken, verifyRefreshToken,
 } from '../utils/tokens.js';
 import { Cart } from '../models/Cart.js';
+import { env } from '../config/env.js';
+import { isPhoneVerifiedForRegistration } from './smsController.js';
 
 const issueSession = (res, user) => {
   res.cookie(REFRESH_COOKIE, signRefreshToken(user), refreshCookieOptions());
@@ -31,6 +33,9 @@ const mergeGuestCart = async (req, user) => {
 
 export const register = asyncHandler(async (req, res) => {
   const { name, email, phone, password } = req.body;
+  if (env.sms.otpRequired && !(await isPhoneVerifiedForRegistration(phone))) {
+    throw ApiError.badRequest('ابتدا شماره موبایل خود را با کد پیامکی تایید کنید', { phone: 'تایید شماره موبایل الزامی است' });
+  }
   if (await User.exists({ $or: [{ email }, { phone }] })) {
     throw ApiError.conflict('کاربری با این ایمیل یا شماره موبایل ثبت شده است');
   }
