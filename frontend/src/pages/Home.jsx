@@ -19,7 +19,7 @@ import {
   getVisit, getRecentlySeen, recordSeen, rng, rotatePick, seededShuffle,
 } from '../utils/visitRotation.js';
 
-// چند محصول نمایش داده شود، و از چه استخری انتخاب شود (استخر بزرگ‌تر = تنوع بیشتر)
+// تعداد محصولات نمایشی و اندازه استخر انتخاب؛ تنوع محصول حفظ می‌شود.
 const SLOTS = {
   featured: { show: 10, pool: 24 },
   popular: { show: 8, pool: 24 },
@@ -31,7 +31,7 @@ export default function Home() {
   const { categories = [] } = useOutletContext() || {};
   const [state, setState] = useState({ featured: [], popular: [], premium: [], offers: [], rated: [], loading: true });
 
-  // یک بار در هر mount؛ شمارنده‌ی ویزیت فقط یک بار در هر جلسه بالا می‌رود
+  // شمارنده بازدید فقط یک بار در هر mount/جلسه به‌روزرسانی می‌شود.
   const visit = useMemo(() => getVisit(), []);
   const seen = useMemo(() => getRecentlySeen(visit), [visit]);
 
@@ -42,7 +42,7 @@ export default function Home() {
       productApi.list({ popular: 'true', sort: 'popular', limit: SLOTS.popular.pool }),
       productApi.list({ discounted: 'true', sort: 'discount', limit: SLOTS.offers.pool }),
       productApi.list({ premium: 'true', sort: 'popular', limit: SLOTS.premium.pool }),
-      // منبع اضافه برای پیشنهاد هوشمند؛ اگر خطا داد بقیه صفحه نباید بخوابد
+      // اگر منبع امتیازدهی خطا بدهد، بقیه صفحه همچنان نمایش داده می‌شود.
       productApi.list({ sort: 'rating', inStock: 'true', limit: 16 }).catch(() => ({ data: { products: [] } })),
     ])
       .then(([f, p, o, pm, r]) => {
@@ -66,25 +66,18 @@ export default function Home() {
   const { featured, popular, premium, offers, rated, loading } = state;
   const recommendSources = useMemo(() => [featured, popular, rated, offers], [featured, popular, rated, offers]);
 
-  // ترتیب دسته‌بندی‌ها هم هر ویزیت عوض می‌شود، پس دو کارت بزرگ همیشه همان دو تا نیستند
-  const rotatedCategories = useMemo(
-    () => seededShuffle(categories, rng(visit, 'categories')),
-    [categories, visit],
-  );
+  // ترتیب دسته‌بندی‌ها همان ترتیب مدیریت‌شده از API است؛ بین بازدیدها تصادفی نمی‌شود.
+  const orderedCategories = categories;
 
-  // ترتیب بخش‌های میانی صفحه بین ویزیت‌ها می‌چرخد
-  const middleSections = useMemo(() => {
-    const blocks = [
-      <EssentialsShelf key="essentials" />,
-      <SpecialOffers key="offers" products={offers} loading={loading} />,
-      <section key="popular" className="wrap pb-4" data-reveal data-below-fold>
-        <SectionHeader eyebrow="انتخاب خریدهای تکرارشونده" title="خریدهای تکرارشونده" description="محصولاتی که مشتری‌ها بعد از اولین خرید دوباره سراغشان آمده‌اند." to="/products?popular=true" />
-        <ProductGrid products={popular} loading={loading} skeletonCount={8} />
-      </section>,
-    ];
-    const order = seededShuffle([0, 1, 2], rng(visit, 'sections'));
-    return order.map((i) => blocks[i]);
-  }, [offers, popular, loading, visit]);
+  // ترتیب بخش‌های اصلی ثابت است تا ساختار و مسیرهای مهم فروشگاه قابل پیش‌بینی بمانند.
+  const middleSections = useMemo(() => [
+    <EssentialsShelf key="essentials" />,
+    <SpecialOffers key="offers" products={offers} loading={loading} />,
+    <section key="popular" className="wrap pb-4" data-reveal data-below-fold>
+      <SectionHeader eyebrow="انتخاب خریدهای تکرارشونده" title="خریدهای تکرارشونده" description="محصولاتی که مشتری‌ها بعد از اولین خرید دوباره سراغشان آمده‌اند." to="/products?popular=true" />
+      <ProductGrid products={popular} loading={loading} skeletonCount={8} />
+    </section>,
+  ], [offers, popular, loading]);
 
   return (
     <>
@@ -103,7 +96,6 @@ export default function Home() {
 
       <PremiumOpening products={premium} loading={loading} />
       <Hero />
-
       <FeaturedFolder products={featured} loading={loading} />
 
       <section className="wrap py-16 sm:py-20" data-reveal data-below-fold>
@@ -112,17 +104,16 @@ export default function Home() {
           title="انتخابت را از اینجا شروع کن"
           description="از گیاهان دارویی تا ادویه‌های روزمره، قفسه مناسب خودت را پیدا کن."
         />
-        {rotatedCategories.length === 0 ? (
+        {orderedCategories.length === 0 ? (
           <div className="grid gap-4 min-[390px]:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => <SkeletonBlock key={i} className="h-44 rounded-2xl" />)}
           </div>
         ) : (
-          // چیدمان نامتقارن: دو کارت بلند + شش کارت کوتاه
           <div className="grid gap-4 min-[390px]:grid-cols-2 lg:grid-cols-4">
-            {rotatedCategories.slice(0, 2).map((c) => (
+            {orderedCategories.slice(0, 2).map((c) => (
               <div key={c._id} className="sm:col-span-1 lg:row-span-2"><CategoryCard category={c} size="lg" /></div>
             ))}
-            {rotatedCategories.slice(2, 8).map((c) => <CategoryCard key={c._id} category={c} />)}
+            {orderedCategories.slice(2, 8).map((c) => <CategoryCard key={c._id} category={c} />)}
           </div>
         )}
       </section>
@@ -139,9 +130,7 @@ export default function Home() {
       </section>
 
       {middleSections}
-
       <RecentlyViewed className="wrap py-14 sm:py-16" />
-
       <WhyUs />
       <Journal />
     </>
