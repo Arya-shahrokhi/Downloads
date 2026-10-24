@@ -8,3 +8,4 @@ export { Wishlist } from './Wishlist.js';
 export { SmsOtp } from './SmsOtp.js';
 export { default as Article } from './Article.js';
 export { SeoRedirect } from './SeoRedirect.js';
+export { PricingSettings } from './PricingSettings.js';
