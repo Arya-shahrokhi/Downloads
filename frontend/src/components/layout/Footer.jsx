@@ -47,12 +47,12 @@ const STATIC_COLUMNS = {
  * real URL are not rendered at all – an href="#" link is a dead link for
  * users and crawlers. WhatsApp falls back to the shop's published phone number.
  */
-const waFromPhone = SITE.telephone ? `https://wa.me/${SITE.telephone.replace(/\\D/g, '')}` : '';
+const waFromPhone = SITE.telephone ? `https://wa.me/${SITE.telephone.replace(/\D/g, '')}` : '';
 const SOCIALS = [
   { Icon: FiInstagram, label: 'اینستاگرام کالاوران', href: import.meta.env.VITE_SOCIAL_INSTAGRAM },
   { Icon: FaTelegramPlane, label: 'تلگرام کالاوران', href: import.meta.env.VITE_SOCIAL_TELEGRAM },
   { Icon: FaWhatsapp, label: 'واتس‌اپ کالاوران', href: import.meta.env.VITE_SOCIAL_WHATSAPP || waFromPhone },
-].filter((s) => /^https?:\\/\\//i.test(s.href || ''));
+].filter((s) => /^https?:\/\//i.test(s.href || ''));
 
 export default function Footer({ categories = [] }) {
   const liveCategories = categories
@@ -73,7 +73,7 @@ export default function Footer({ categories = [] }) {
 
   const [subscribe, submitting] = useSubmit(async (e) => {
     e.preventDefault();
-    if (!/^\\S+@\\S+\\.\\S+$/.test(email)) return toast.error('ایمیل معتبر وارد کنید');
+    if (!/^\S+@\S+\.\S+$/.test(email)) return toast.error('ایمیل معتبر وارد کنید');
     await new Promise((r) => setTimeout(r, 600));
     setEmail('');
     return toast.success('ثبت شد. خبرهای فصلی برایتان می‌آید.');
