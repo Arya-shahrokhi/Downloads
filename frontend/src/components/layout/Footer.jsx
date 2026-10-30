@@ -141,6 +141,24 @@ export default function Footer({ categories = [] }) {
         </div>
       </div>
 
+      <div className="flex justify-center px-4 pb-6">
+        <a
+          referrerPolicy="origin"
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://trustseal.enamad.ir/?id=8217577&Code=9F0cVskfhpWx4OZUsryXpatI7rZqUgnB"
+          aria-label="مشاهده و اعتبارسنجی نماد اعتماد الکترونیکی کالاوران"
+        >
+          <img
+            referrerPolicy="origin"
+            src="https://trustseal.enamad.ir/logo.aspx?id=8217577&Code=9F0cVskfhpWx4OZUsryXpatI7rZqUgnB"
+            alt="نماد اعتماد الکترونیکی کالاوران"
+            style={{ cursor: 'pointer' }}
+            code="9F0cVskfhpWx4OZUsryXpatI7rZqUgnB"
+          />
+        </a>
+      </div>
+
       <div className="border-t border-bone-50/10">
         <div className="mobile-footer-clearance wrap flex flex-col items-center justify-between gap-3 pt-5 text-2xs text-bone-200/45 sm:flex-row">
           <p className="num">© ۱۴۰۵ کالاوران. تمام حقوق محفوظ است.</p>
